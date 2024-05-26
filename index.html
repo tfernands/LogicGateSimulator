@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Logic Gate Simulator</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+
+  <link rel="stylesheet" type="text/css" href="styles/index.css">
+  <script type="text/javascript" src="scripts/cnode.js"></script>
+  <script type="text/javascript" src="scripts/ccircuit.js"></script>
+  <script type="text/javascript" src="scripts/gcircuit.js"></script>
+  <script type="text/javascript" src="scripts/index.js" defer></script>
+  <script type="text/javascript">
+    function toogle_fullscreen(){
+      e = document.getElementById('fullscreen');
+      if (document.fullscreen){
+        document.exitFullscreen()
+        .then(() => e.innerHTML = 'fullscreen')
+        .catch((err) => console.error(err))        
+      }
+      else{
+        document.getElementsByTagName('html')[0].requestFullscreen()
+        .then(() => e.innerHTML = 'fullscreen_exit')
+        .catch((err) => console.error(err))       
+      }
+    }
+    function criar_componente(){
+      if(createModule()){
+        document.getElementById('dialog-nc').close();
+      };
+      return false;
+    }
+    function setZoom(v){
+      workspace.style.transform = "scale("+v+","+v+")";
+      document.getElementById('zoomperc').innerHTML = (v*100).toFixed(0)+'%';
+    }
+    function getZoom(){
+      return getWorkspaceScale();
+    }
+  </script>
+</head>
+<body onload="initialize()">
+
+  <!-- DIALOGS -->
+
+  <!-- DIALOG NEW COMPONENT -->
+  <dialog id='dialog-nc'>
+    <form onsubmit="return criar_componente()">
+      <div id='dialog-header'>
+        Novo módulo
+      </div>
+      <div id='dialog-body'>
+        <input id="component_name" type="text" placeholder="Nome do componente...">
+      </div>
+      <div id='dialog-footer'>
+        <input class="btn" value="criar" type="submit">
+        <input type="button" value="cancelar" onclick="document.getElementById('dialog-nc').close()">
+      </div>
+    </form>
+  </dialog>
+
+  <!-- IO DIALOG -->
+  <dialog id='dialog-ioname'>
+      <form onsubmit="return false">
+        <div id='dialog-header'>
+          Nome do terminal
+        </div>
+        <div id='dialog-body'>
+          <input id="io_name" type="text" placeholder="Nome" size=8>
+        </div>
+        <div id='dialog-footer'>
+          <input class="btn" value="Ok" type="submit">
+          <input type="button" value="cancelar" onclick="document.getElementById('dialog-ioname').close()">
+        </div>
+      </form>
+  </dialog>
+
+  <!-- CONTEXT MENU -->
+  <div id="ctxmenu" onclick="this.style.visibility='hidden'" oncontextmenu="return false">
+    <div id="ctxcontent">
+      <label><i class="material-icons">edit</i>Renomear porta</label>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div>
+    <header>
+      <label class="btn" onclick="toogle_fullscreen()"><i id="fullscreen" class="material-icons">fullscreen</i></button></label>    <input id='project_name' type="text" value="Portas Lógicas">
+      <span class="fright">
+        <label class="btn" onclick="document.getElementById('dialog-nc').showModal()"><i class="material-icons">add</i></label>
+        <label class="btn" onclick="save()"><i class="material-icons">file_download</i></label>
+        <label class="btn" for='load_files'><i class="material-icons">file_upload</i></label>
+        <input class="btn" type="file" id="load_files" onchange="load(this.files)">
+      </span>
+    </header>
+  </div>
+  <nav></nav>
+
+  <!-- WORKSPACE -->
+  <div id='container' class="container">
+    <div id="ui" class="ui panel0">
+      <div id="activity" class="glass"></div>
+
+      <div class="float glass resizable">
+        <h4>Componentes</h4>
+        <h6>contagem <span id="listcount">0</span></h6>
+        <ul id="componentlist"></ul>
+      </div>
+
+      <div id="zoom" class="float glass">
+        <label onclick="setZoom(getZoom()*1.2)"><i class="material-icons">zoom_in</i></label>
+        <label onclick="setZoom(1)" id='zoomperc'>100%</label>
+        <label onclick="setZoom(getZoom()*.8)"><i class="material-icons">zoom_out</i></label>
+      </div>
+
+      <div id="workmap"></div>
+    </div>
+    <div id="viewport" class="panel1 bounded scroll">
+      <div id="workspace" ondragover="allowDrop(event)" ondrop="workspace_drop(event)">
+        <svg dragable id='svg' xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer id='drawer' ondrop="drawer_drop(event)"></footer>
+
+</body>
+</html>
