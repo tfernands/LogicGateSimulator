@@ -127,7 +127,7 @@ class IO extends CComponent{
 	}
 }
 
-class CCircuit extends CComponent{
+class CCircuit extends CComponent {
 
 	static components = {};
 

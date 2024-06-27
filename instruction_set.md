@@ -1,18 +1,20 @@
-INSTRUCTION            DESCRIPTION
---------------------------------------------------------------------------------------
-HLT                    halt
-OUT                    write data in A to output buffer
-ADD                    add A and B and store the result to A: A = A + B    
-SUB                    subtract B from A and store the result to A: A = A - B    
-LD   <reg>             load memory DATA at current memory address to register <A|B>
-ST   <reg>             store register DATA to memory at current memory address <A|B>
-ADR  <reg>             set the memory ADDRESS to value stored at register <A|B>
-LDI  <reg> <imm>       load 4bit immediate to register <A|B> less significant bits
-LDIH <reg> <imm>       load 4bit immediate to register <A|B> highest significant bits
-ADRI <imm>             set immediate to memory ADDRESS
-BEQ  <imm>             if A = B PC is set to immediate value, else continue.
-JMP  <imm>             set PC to immediate value.
-JMPR <reg>             set PC to the value stored in the register <A|B>
+COMP88-v1.3
+
+INSTRUCTION          | DESCRIPTION
+---------------------|----------------------------------------------------------------
+HLT                  | halt
+OUT  \<reg>           | write data in register <A|B> to output buffer
+ADD  \<reg>           | add A and B and store the result to register <A|B> = A + B    
+SUB  \<reg>           | subtract B from A and store the result to register <A|B> = A - B    
+LD   \<reg>           | load memory DATA at current memory address to register <A|B>
+ST   \<reg>           | store register DATA to memory at current memory address <A|B>
+ADR  \<reg>           | set the memory ADDRESS to value stored at register <A|B>
+LDI  \<reg> \<imm>    | load 4bit immediate to register <A|B> less significant bits
+LDIH \<reg> \<imm>    | load 4bit immediate to register <A|B> highest significant bits
+ADRI \<imm>           | set immediate to memory ADDRESS
+BEQ  \<imm>           | if A = B PC is set to immediate value, else continue.
+JMP  \<imm>           | set PC to immediate value.
+JMPR \<reg>           | set PC to the value stored in the register <A|B>
 
 
 EXAMPLE PROGRAM
@@ -23,8 +25,8 @@ LDI A 1       1000 1100
 LDI B 1       1000 1101
 LOOP:
 ST  A         0001 0100
-ADD           0000 0100
-OUT           0000 0001
+ADD A         0000 0100
+OUT A         0000 0001
 LD  B         0001 0001
 JMP 2         0100 1111
 
@@ -37,25 +39,28 @@ JMP 2         0100 1111
 
 ---------------------------------------------------
 | TYPE |  NAME  |  BITCONFIG   | CONTROLER OUTPUT |
-|------|--------|-012-3-4-56-7-|------------------|
+|------|--------|--------------|------------------|
 |  O   | HLT    | --- 0 0 00 0 | 00 00 000 00 000 |  halts (dont actually halt, but nothing is done)
-|  O   | OUT    | --- 0 0 00 1 | 00 10 000 00 001 |  write data in A to output buffer
-|  O   | ADD    | --- 0 0 10 0 | 00 11 000 10 000 |  A = A + B    
-|  O   | SUB    | --- 0 0 10 1 | 00 11 000 10 100 |  A = A - B
+|  O   | OUT A  | --- 0 0 01 0 | 00 10 000 00 001 |  write data in A to output buffer
+|  O   | OUT B  | --- 0 0 01 0 | 00 00 000 10 001 |  write data in B to output buffer
+|  O   | ADD A  | --- 0 0 10 0 | 00 11 000 10 000 |  A = A + B  
+|  O   | ADD B  | --- 0 0 10 0 | 00 10 000 11 000 |  B = A + B  
+|  O   | SUB A  | --- 0 0 11 0 | 00 11 000 10 100 |  A = A - B
+|  O   | SUB B  | --- 0 0 11 0 | 00 10 000 11 100 |  B = A - B
 |  M   | LD A   | --- 1 0 00 0 | 00 01 100 00 000 |  load memory DATA at current address to A
-|  M   | LD B   | --- 1 0 00 1 | 00 00 100 01 000 |  load memory DATA at current address to B
+|  M   | LD B   | --- 1 0 00 0 | 00 00 100 01 000 |  load memory DATA at current address to B
 |  M   | ST A   | --- 1 0 10 0 | 00 10 010 00 000 |  store A DATA to memory at current address
-|  M   | ST B   | --- 1 0 10 1 | 00 00 010 10 000 |  store B DATA to memory at current address
+|  M   | ST B   | --- 1 0 10 0 | 00 00 010 10 000 |  store B DATA to memory at current address
 |  M   | ADR A  | --- 1 0 01 0 | 00 10 001 00 000 |  set the memory ADDRESS to A
-|  M   | ADR B  | --- 1 0 01 1 | 00 00 001 10 000 |  set the memory ADDRESS to B
+|  M   | ADR B  | --- 1 0 01 0 | 00 00 001 10 000 |  set the memory ADDRESS to B
 |  M   | JMPR A | --- 1 0 11 0 | 00 10 000 00 010 |  set PC the value loaded to register A
-|  M   | JMPR B | --- 1 0 11 1 | 00 00 000 10 010 |  set PC the value loaded to register B
+|  M   | JMPR B | --- 1 0 11 0 | 00 00 000 10 010 |  set PC the value loaded to register B
 |  I   | LDI  A | <imm> 1 10 0 | 01 01 000 00 000 |  load immediate to A (lower significant bits)
-|  I   | LDI  B | <imm> 1 10 1 | 01 00 000 01 000 |  load immediate to B (lower significant bits)
+|  I   | LDI  B | <imm> 1 10 0 | 01 00 000 01 000 |  load immediate to B (lower significant bits)
 |  I   | LDHI A | <imm> 1 01 0 | 11 01 000 00 000 |  load immediate to A (higher significant bits)
-|  I   | LDHI B | <imm> 1 01 1 | 11 00 000 01 000 |  load immediate to B (higher significant bits)
+|  I   | LDHI B | <imm> 1 01 0 | 11 00 000 01 000 |  load immediate to B (higher significant bits)
 |  I   | ADRI   | <imm> 1 00 0 | 01 00 001 00 000 |  set immediate to memory ADDRESS
-|  I   | BEQ    | <imm> 1 11 0 | 01 10 000 00 1?0 |  if A = B PC is set to immediate value, else continue.
+|  I   | BEQ    | <imm> 1 11 0 | 01 10 000 10 1?0 |  if A = B PC is set to immediate value, else continue.
 |  I   | JMP    | <imm> 1 11 1 | 01 00 000 00 010 |  set PC to immediate value.
 ---------------------------------------------------
 
@@ -64,11 +69,11 @@ IMM2BUS_H
 IMM2BUS
 A_READ 
 A_WRITE
-M_READ
-M_WRITE
-MR_WRITE
 B_READ (NAO VAI PARA A BUS)
 B_WRITE
+M_READ
+M_WRITE
+MR_WRITE  
 ALU_OP
 PC_WRITE
 OUT_WRITE
@@ -76,21 +81,21 @@ OUT_WRITE
 =======================================================
 
 COMPILER.js
-
+```js
 INSTRUCTION_SET = {
 	"HLT":   "0000 0000",
-	"OUT":   "0000 0001",
-	"ADD":   "0000 0100",
-	"SUB":   "0000 0101",
+	"OUT":   "0000 001R",
+	"ADD":   "0000 010R",
+	"SUB":   "0000 011R",
 	"LD":    "0001 000R",
 	"ST":    "0001 010R",
 	"ADR":   "0001 001R",
 	"JMPR":  "0001 011R",
-        "LDI":   "iiii 110R",
+  "LDI":   "iiii 110R",
 	"LDHI":  "iiii 101R",
 	"ADRI":  "iiii 1000",
 	"BEQ":   "iiii 1110",
-        "JMP":   "iiii 1111"
+  "JMP":   "iiii 1111"
 }
 
 function getComponent(name){
@@ -193,13 +198,23 @@ function instructionLoader(component, prog_text, writeNodeId, clkNodeId, address
   return prog;
 }
 
+function instructionExtractor(component, addressNodeIds, binaryNodeIds, n_lines, speed, callback){
+  binary = [];
+  let address = 0;
+  component.writeNodeStatesByIdList(addressNodeIds, address_list(0, addressNodeIds.length));
+  for (let i = 0; i < n_lines; i++){
+    line = component.readNodeStatesByIdList(binaryNodeIds).map(e=>e.state).join("");
+    binary.push(line);
+  }
+}
+
 function run(max_it, speed){
     const clk = getComponent("IO").filter(e=>e.ccomp.inputs[0].id=="CLK")[0].getNodeById("CLK");
     let i = 0;
     const interval = setInterval(()=>{
        clk.write(!clk.read());
        i++;
-       if (i >= max_it){
+       if (i >= max_it*2){
           clearInterval(interval);
        }
     }, speed);
@@ -231,21 +246,21 @@ function load(prog, callback){
 }
 
 function exec(line){
-  load(line, ()=>{run(1, 100);});
+  load(line, ()=>{run(1, 200);});
 }
 
 
 prog_text = `
-LDI  A 8	
+LDI  A 2
 
 JMP PROG_BEGIN	
 PROG_END:
 ADRI 1		
 LD   A
-OUT		
+OUT	 A
 LDHI A 2	
 LDI  B 1	
-SUB		
+SUB	 A
 JMPR A		
 
 PROG_BEGIN:
@@ -262,13 +277,13 @@ LD   A
 ADRI 2
 LD   B
 ST   A
-ADD
+ADD  A
 ADRI 1
 ST   A
 ADRI 0
 LD   A
 LDI  B 1
-SUB
+SUB  A
 BEQ  PROG_END
 ST   A
 JMP  LOOP
@@ -277,3 +292,4 @@ JMP  LOOP
 load(prog_text);
 
 
+```

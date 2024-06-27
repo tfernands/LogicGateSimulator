@@ -12,8 +12,23 @@
 
 
   <link rel="stylesheet" type="text/css" href="styles/index.css">
+
+  <!-- TOOLS -->
+  <script type="text/javascript" src="scripts/tools/ctxmenu.js"></script>
+  <script type="text/javascript" src="scripts/tools/selectionHandler.js"></script>
+  <script type="text/javascript" src="scripts/tools/activity.js"></script>
+
+  <!-- LOGIC SCRIPTS -->
   <script type="text/javascript" src="scripts/cnode.js"></script>
   <script type="text/javascript" src="scripts/ccircuit.js"></script>
+
+  <!-- UI COMPONENTS SCRIPTS  -->
+  <script type="text/javascript" src="scripts/components/component.js"></script>
+
+  <!-- EXTRA COMPONENTS -->
+  <script type="text/javascript" src="scripts/components/extra/display8segments.js"></script>
+  <script type="text/javascript" src="scripts/components/extra/raw.js"></script>
+
   <script type="text/javascript" src="scripts/gcircuit.js"></script>
   <script type="text/javascript" src="scripts/index.js" defer></script>
   <script type="text/javascript">
@@ -107,20 +122,16 @@
     <div id="ui" class="ui panel0">
       <div id="activity" class="glass"></div>
 
-      <div class="float glass resizable">
-        <h4>Componentes</h4>
-        <h6>contagem <span id="listcount">0</span></h6>
-        <ul id="componentlist"></ul>
-      </div>
-
+      <!-- ZOOM BUTTONS -->
       <div id="zoom" class="float glass">
         <label onclick="setZoom(getZoom()*1.2)"><i class="material-icons">zoom_in</i></label>
         <label onclick="setZoom(1)" id='zoomperc'>100%</label>
         <label onclick="setZoom(getZoom()*.8)"><i class="material-icons">zoom_out</i></label>
       </div>
 
-      <div id="workmap"></div>
     </div>
+
+    <!-- VIEWPORT AND WORKSPACE -->
     <div id="viewport" class="panel1 bounded scroll">
       <div id="workspace" ondragover="allowDrop(event)" ondrop="workspace_drop(event)">
         <svg dragable id='svg' xmlns="http://www.w3.org/2000/svg"></svg>
