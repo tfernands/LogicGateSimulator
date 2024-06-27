@@ -238,7 +238,6 @@ h6{
 }
 #ctxcontent label{
 	padding: .5em;
-	vertical-align: middle;
 	color: black;
 	display: block !important;
 	font-size: 1.1em;
@@ -287,23 +286,6 @@ footer {
 	flex-wrap: wrap;
 	justify-content: center;
 	z-index: 2;
-}
-
-button, .btn{
-	/*border: thin solid #008cba*/; /* Blue NCS */
-	/*background: #1a3243;*/
- 	/*color: #FFFFFF; /* White */;*/
- 	/*padding: .5em 1em;*/
- 	/*text-align: center;*/
-  /*text-decoration: none;*/
-  /*display: inline-block;*/
- 	/*border-radius: 10px;*/
- 	/*transition: .2s;*/
- 	/*box-shadow: 0 .2em .4em rgba(0,0,0,.4);*/
- 	/*touch-action: manipulation;*/
-}
-button: hover, .btn:hover{
-	/*background-color: #108FBF;*/
 }
 
 dialog{
@@ -484,6 +466,15 @@ circle {
 	r: 5;
 	pointer-events:none;
 }
+
+.on {
+	fill: red;
+}
+.off {
+	fill: darkred;
+}
+
+
 circle[state="0"]{
 	fill: darkred;
 }
