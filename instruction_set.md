@@ -1,8 +1,8 @@
 COMP88-v1.3
 
-INSTRUCTION          | DESCRIPTION
----------------------|----------------------------------------------------------------
-HLT                  | halt
+INSTRUCTION           | DESCRIPTION
+----------------------|----------------------------------------------------------------
+HLT                   | halts
 OUT  \<reg>           | write data in register <A|B> to output buffer
 ADD  \<reg>           | add A and B and store the result to register <A|B> = A + B    
 SUB  \<reg>           | subtract B from A and store the result to register <A|B> = A - B    
@@ -28,7 +28,7 @@ ST  A         0001 0100
 ADD A         0000 0100
 OUT A         0000 0001
 LD  B         0001 0001
-JMP 2         0100 1111
+JMP LOOP      0100 1111
 
 -----------------------------------------------------------
 | TYPE | CODE |                  LAYOUT                   |
@@ -40,7 +40,7 @@ JMP 2         0100 1111
 ---------------------------------------------------
 | TYPE |  NAME  |  BITCONFIG   | CONTROLER OUTPUT |
 |------|--------|--------------|------------------|
-|  O   | HLT    | --- 0 0 00 0 | 00 00 000 00 000 |  halts (dont actually halt, but nothing is done)
+|  O   | HLT    | --- 0 0 00 0 | 00 00 000 00 000 |  halts
 |  O   | OUT A  | --- 0 0 01 0 | 00 10 000 00 001 |  write data in A to output buffer
 |  O   | OUT B  | --- 0 0 01 0 | 00 00 000 10 001 |  write data in B to output buffer
 |  O   | ADD A  | --- 0 0 10 0 | 00 11 000 10 000 |  A = A + B  
@@ -57,8 +57,8 @@ JMP 2         0100 1111
 |  M   | JMPR B | --- 1 0 11 0 | 00 00 000 10 010 |  set PC the value loaded to register B
 |  I   | LDI  A | <imm> 1 10 0 | 01 01 000 00 000 |  load immediate to A (lower significant bits)
 |  I   | LDI  B | <imm> 1 10 0 | 01 00 000 01 000 |  load immediate to B (lower significant bits)
-|  I   | LDHI A | <imm> 1 01 0 | 11 01 000 00 000 |  load immediate to A (higher significant bits)
-|  I   | LDHI B | <imm> 1 01 0 | 11 00 000 01 000 |  load immediate to B (higher significant bits)
+|  I   | LDIH A | <imm> 1 01 0 | 11 01 000 00 000 |  load immediate to A (higher significant bits)
+|  I   | LDIH B | <imm> 1 01 0 | 11 00 000 01 000 |  load immediate to B (higher significant bits)
 |  I   | ADRI   | <imm> 1 00 0 | 01 00 001 00 000 |  set immediate to memory ADDRESS
 |  I   | BEQ    | <imm> 1 11 0 | 01 10 000 10 1?0 |  if A = B PC is set to immediate value, else continue.
 |  I   | JMP    | <imm> 1 11 1 | 01 00 000 00 010 |  set PC to immediate value.
@@ -83,16 +83,16 @@ OUT_WRITE
 COMPILER.js
 ```js
 INSTRUCTION_SET = {
-	"HLT":   "0000 0000",
-	"OUT":   "0000 001R",
-	"ADD":   "0000 010R",
-	"SUB":   "0000 011R",
-	"LD":    "0001 000R",
-	"ST":    "0001 010R",
-	"ADR":   "0001 001R",
-	"JMPR":  "0001 011R",
+	"HLT":   "xxx0 0000",
+	"OUT":   "xxx0 001R",
+	"ADD":   "xxx0 010R",
+	"SUB":   "xxx0 011R",
+	"LD":    "xxx1 000R",
+	"ST":    "xxx1 010R",
+	"ADR":   "xxx1 001R",
+	"JMPR":  "xxx1 011R",
   "LDI":   "iiii 110R",
-	"LDHI":  "iiii 101R",
+	"LDIH":  "iiii 101R",
 	"ADRI":  "iiii 1000",
 	"BEQ":   "iiii 1110",
   "JMP":   "iiii 1111"
@@ -109,9 +109,11 @@ function parse_imm(imm){
   return (imm+16).toString(2).substring(1).split("").reverse().join("");
 }
 
+
 function parseAssemblyLine(line){
   const tokens = line.toUpperCase().replace(/\s+/g,' ').replace(/^\s*/g,'').split(' ');
   let bin = INSTRUCTION_SET[tokens[0]].replaceAll(' ', '');
+  bin = bin.replaceAll("x", "0");
   if (bin.includes("R")){
     bin = bin.replace("R", tokens[1]=="A"?"0":"1");
     if (bin[4] === "1"){
@@ -142,7 +144,12 @@ function parseAssembly(string){
       ref.push({ln, ref: l});
     }
     catch {
-      blocks[line.replace(':', '')] = instructions.length;
+      if (line.includes(":")){
+        blocks[line.replace(':', '')] = instructions.length;
+      }
+      else {
+        throw new Error("Invalid instruction at line " + ln);
+      }
     }
     ln++;
   }
@@ -155,6 +162,45 @@ function parseAssembly(string){
   return {ref, instructions, binary, blocks}
 }
 
+function binaryInstructionImmToDec(binary_line){
+  // binary_line is a string of 8 bits
+  return Number.parseInt(binary_line.substring(0, 4).split("").reverse().join(""), 2);
+}
+function binaryToAssembly(binary){
+  let assembly = [];
+  for (const b of binary){
+    for (const instruction in INSTRUCTION_SET){
+      ref_bin = INSTRUCTION_SET[instruction].replaceAll(' ', '');
+      if (b[4] === "1"){
+        // IMMEDIATE INSTRUCTION
+        if (ref_bin[7] === "R" && ref_bin.substring(4, 7) === b.substring(4, 7)){
+          register = b[7] === "0"?"A":"B";
+          imm = binaryInstructionImmToDec(b);
+          assembly.push(instruction + " " + register + " " + imm);
+          break;
+        }
+        else if (ref_bin.substring(4, 8) === b.substring(4, 8)){
+          imm = binaryInstructionImmToDec(b);
+          assembly.push(instruction + " " + imm);
+          break;
+        }
+      }
+      else {
+        if (ref_bin[7] === "R" && ref_bin.substring(3, 7) === b.substring(3, 7)){
+          register = b[7] === "0"?"A":"B";
+          assembly.push(instruction + " " + register);
+          break;
+        }
+        else if (ref_bin.substring(3, 8) === b.substring(3, 8)){
+          assembly.push(instruction);
+          break;
+        }
+      }
+    }
+  }
+  return assembly;
+}
+
 function address_list(address_number, slots){
   return (address_number+1024).toString(2).split('').reverse().join('')
 	.substr(0, slots).split('').map(e=>(Number.parseInt(e)));
@@ -163,13 +209,13 @@ function address_list(address_number, slots){
 function instructionLoader(component, prog_text, writeNodeId, clkNodeId, addressNodeIds, binaryNodeIds, speed, callback){
   component.writeNodeStatesByIdList([writeNodeId, clkNodeId], [1, 0]);
   prog = parseAssembly(prog_text);
+  console.log(prog)
   let i = 0;
   let address = 0;
-  component.writeNodeStatesByIdList(addressNodeIds, address_list(0, addressNodeIds.length));
   const interval = setInterval(()=>{
     try {
       if (i === prog.binary.length*3){
-	clearInterval(interval);
+	      clearInterval(interval);
         component.writeNodeStatesByIdList([writeNodeId], [0]);
         component.writeNodeStatesByIdList(addressNodeIds, address_list(0, addressNodeIds.length));
         component.writeNodeStatesByIdList(binaryNodeIds, address_list(0, binaryNodeIds.length));
@@ -177,16 +223,16 @@ function instructionLoader(component, prog_text, writeNodeId, clkNodeId, address
         console.log("Finished");
       }
       else if (i % 3 === 0){
+        component.writeNodeStatesByIdList(addressNodeIds, address_list(address, addressNodeIds.length));
         component.writeNodeStatesByIdList(binaryNodeIds, prog.binary[address].split("").map(e=>Number.parseInt(e))); 
       }
       else if (i % 3 === 1) {
          component.writeNodeStatesByIdList([clkNodeId], [1]);
-         console.log(prog.binary[address],"  ", prog.instructions[address]);
+         console.log(address, prog.binary[address],"  ", prog.instructions[address]);
          address++;
       }
       else {
          component.writeNodeStatesByIdList([clkNodeId], [0]);
-         component.writeNodeStatesByIdList(addressNodeIds, address_list(address, addressNodeIds.length));
       }
       i++;
     }
@@ -200,12 +246,31 @@ function instructionLoader(component, prog_text, writeNodeId, clkNodeId, address
 
 function instructionExtractor(component, addressNodeIds, binaryNodeIds, n_lines, speed, callback){
   binary = [];
+  let i = 0;
   let address = 0;
-  component.writeNodeStatesByIdList(addressNodeIds, address_list(0, addressNodeIds.length));
-  for (let i = 0; i < n_lines; i++){
-    line = component.readNodeStatesByIdList(binaryNodeIds).map(e=>e.state).join("");
-    binary.push(line);
-  }
+  const interval = setInterval(()=>{
+    try {
+      if (i === n_lines*2){
+        clearInterval(interval);
+        component.writeNodeStatesByIdList(addressNodeIds, address_list(0, addressNodeIds.length));
+        assembly = binaryToAssembly(binary)
+        console.log(assembly);
+        setTimeout(()=>{callback?.(assembly)}, 50);
+      }
+      else if (i % 2 === 0){
+        component.writeNodeStatesByIdList(addressNodeIds, address_list(address, addressNodeIds.length));
+      }
+      else {
+         binary.push(component.readNodeStatesByIdList(binaryNodeIds).join(""));
+         address++;
+      }
+      i++;
+    }
+    catch(e){
+      console.log(e);
+      clearInterval(interval);
+    }
+  }, speed);
 }
 
 function run(max_it, speed){
@@ -239,10 +304,15 @@ let comp = getComponent("MEM32")[0];
 let write = "W"
 let clk = "clk"
 let addressNodeIds = ["s0","s1","s2","s3","s4"];
+let mem32outputIds = ["d0","d1","d2","d3","d4","d5","d6","d7"]
 let binaryNodeIds = ["X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7"];
 
 function load(prog, callback){
   return instructionLoader(comp, prog, write, clk, addressNodeIds, binaryNodeIds, 100, callback);
+}
+
+function extract(n_lines, callback){
+  return instructionExtractor(comp, addressNodeIds, mem32outputIds, n_lines, 100, callback);
 }
 
 function exec(line){
@@ -251,19 +321,17 @@ function exec(line){
 
 
 prog_text = `
-LDI  A 2
+LDI  A 5
 
 JMP PROG_BEGIN	
 PROG_END:
 ADRI 1		
 LD   A
 OUT	 A
-LDHI A 2	
-LDI  B 1	
-SUB	 A
-JMPR A		
+HLT
 
 PROG_BEGIN:
+ADRI 0
 LDI  B 1	
 ST   A			
 ADRI 1		
